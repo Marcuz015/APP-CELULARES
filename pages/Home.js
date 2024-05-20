@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { FlatList, View, Text, StyleSheet, TextInput, Modal, Image, TouchableOpacity } from 'react-native';
-import Celulares from '../Celulares';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 
 const theme = {
   colors: {
@@ -9,76 +8,55 @@ const theme = {
 };
 
 export default function Home() {
-  const [dados, setCelulares] = useState([]);
-  const [busca, setBusca] = useState('');
-  const [showModal, setShowModal] = useState(false);
-  const [selectedItem, setSelectedItem] = useState(null);
+  const [nome, setNome] = useState('');
+  const [marca, setMarca] = useState('');
 
-  async function getDados(url = "") {
-    const response = await fetch(url, {
-      method: "GET",
-      mode: "cors",
-      cache: "no-cache",
-      credentials: "same-origin",
-      headers: {
-        "Content-Type": "application/json"
-      }
-    });
-    return response.json();
+  async function PostDados(url = "", data = {}) {
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        mode: "cors",
+        cache: "no-cache",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      });
+      return response.json();
+    } catch (error) {
+      console.error('Erro ao cadastrar celular:', error);
+    }
   }
 
-  useEffect(() => {
-    getDados(`http://localhost:3000/celulares?nome=${busca}`).then((listaDeCelulares) => {
-      setCelulares(listaDeCelulares);
-    });
-  }, [busca]);
-
-  const exibirItens = ({ item }) => {
-    return (
-      <View style={styles.itemContainer}>
-        <Text style={styles.itemText}>{item.nome}</Text>
-        <TouchableOpacity style={styles.botao} onPress={() => handleSaibaMais(item)}>
-          <Text style={styles.botaoTexto}>Mais informações</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
-  const handleSaibaMais = (item) => {
-    setSelectedItem(item);
-    setShowModal(true);
-  }
+  const handleSubmit = () => {
+    PostDados("http://localhost:3000/celulares", { nome, marca })
+      .then((newCelular) => {
+        console.log('Celular cadastrado com sucesso:', newCelular);
+        setNome('');
+        setMarca('');
+      })
+      .catch(error => console.error('Erro ao cadastrar celular:', error));
+  };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.titulo}>Loja do JLK 📱</Text>
-      <View>
-          <TextInput
-            style={styles.campoBusca}
-            label='Buscar ...'
-            value={busca}
-            onChangeText={setBusca}
-            placeholder='Buscar...'
-          />
-      </View>
-      <View style={styles.listacelulares}>
-        <FlatList
-          data={dados}
-          renderItem={exibirItens}
-          keyExtractor={(item) => item.nome.toString()}
-        />
-      </View>
-      <Modal visible={showModal} animationType="slide">
-        <View style={styles.modalContainer}>
-          <Text style={styles.modalText}>{selectedItem && selectedItem.nome}</Text>
-          <Text style={styles.modalText}>{selectedItem && selectedItem.marca}</Text>
-          <Text style={styles.modalText}>{selectedItem && selectedItem.data_criacao}</Text>
-
-          <TouchableOpacity style={styles.botaoFechar} onPress={() => setShowModal(false)} >
-            <Text style={styles.botaoTexto}>Fechar</Text>
-          </TouchableOpacity>
-        </View>
-      </Modal>
+      <Text style={styles.titulo}>Cadastrar Celular 📱</Text>
+      <TextInput
+        style={styles.input}
+        value={nome}
+        onChangeText={setNome}
+        placeholder='Nome do celular'
+      />
+      <TextInput
+        style={styles.input}
+        value={marca}
+        onChangeText={setMarca}
+        placeholder='Marca do celular'
+      />
+      <TouchableOpacity style={styles.botao} onPress={handleSubmit}>
+        <Text style={styles.botaoTexto}>Cadastrar</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -88,60 +66,34 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     alignItems: 'center',
-    justifyContent: 'flex-start',
-  },
-  listacelulares: {
-    height: 600
+    justifyContent: 'center',
+    padding: 20,
   },
   titulo: {
     fontSize: 28,
     fontWeight: '700',
     color: '#03363a',
-    marginVertical: 30
+    marginBottom: 30,
   },
-  campoBusca: {
-    borderWidth:1,
-    width: 200,
-    borderRadius: 20,
-    textAlign: 'center'
-  },
-  itemContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc'
-  },
-  itemText: {
+  input: {
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 20,
     fontSize: 18,
   },
-  modalContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fff'
-  },
-  modalText: {
-    fontSize: 24,
-    marginBottom: 20,
-  },
   botao: {
-    width: 100,
-    backgroundColor: '#000',
-    borderRadius: 20,
-    paddingVertical: 10,
-  },
-  botaoFechar: {
-    width: 100,
-    backgroundColor: '#000',
-    borderRadius: 20,
-    paddingVertical: 10,
-    marginTop: 20,
+    width: '100%',
+    backgroundColor: theme.colors.primary,
+    borderRadius: 10,
+    paddingVertical: 15,
+    alignItems: 'center',
   },
   botaoTexto: {
     color: '#fff',
-    textAlign: 'center',
-  }
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
 });
